@@ -1,17 +1,12 @@
 pipeline {
     agent any
-
     environment {
         APP_DIR = '/var/www/demo-app'
     }
-
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
-
         stage('Backend: install & check') {
             steps {
                 dir('sample-backend') {
@@ -24,7 +19,6 @@ pipeline {
                 }
             }
         }
-
         stage('Frontend: install & build') {
             steps {
                 dir('sample-frontend') {
@@ -35,19 +29,19 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy') {
             steps {
                 sh '''
-                    rsync -a --delete \
+                    rsync -rlptD --delete \
                         --exclude ".git" \
                         --exclude "sample-backend/venv" \
                         --exclude "sample-backend/.env" \
+                        --exclude "sample-frontend/.env" \
                         --exclude "sample-frontend/node_modules" \
                         ./ ${APP_DIR}/
 
                     cd ${APP_DIR}/sample-backend
-                    . venv/bin/activate 2>/dev/null || python3 -m venv venv && . venv/bin/activate
+                    . venv/bin/activate
                     pip install -r requirements.txt
                     python manage.py migrate --noinput
                     python manage.py collectstatic --noinput
@@ -59,7 +53,6 @@ pipeline {
             }
         }
     }
-
     post {
         success { echo 'Deployed successfully.' }
         failure { echo 'Build or deploy failed — check the stage logs above.' }
