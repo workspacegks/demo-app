@@ -25,6 +25,9 @@ pipeline {
                         echo "Running Django system check..."
                         python manage.py check
 
+                        echo "Checking for missing migrations..."
+                        python manage.py makemigrations --check --dry-run
+
                         echo "Running Django tests..."
                         python manage.py test
 
@@ -62,12 +65,18 @@ pipeline {
 
                     pip install -r requirements.txt
 
+                    echo "Applying database migrations..."
                     python manage.py migrate --noinput
+
+                    echo "Collecting static files..."
                     python manage.py collectstatic --noinput
 
                     deactivate
 
+                    echo "Restarting Gunicorn..."
                     sudo systemctl restart demo-app
+
+                    echo "Reloading Nginx..."
                     sudo systemctl reload nginx
                 '''
             }
@@ -76,11 +85,11 @@ pipeline {
 
     post {
         success {
-            echo 'Tests passed and application deployed successfully.'
+            echo 'Migration check, tests, build, and deployment completed successfully.'
         }
 
         failure {
-            echo 'Build, test, or deployment failed — check the stage logs above.'
+            echo 'Pipeline failed — check the stage logs above.'
         }
     }
 }
