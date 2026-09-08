@@ -1,24 +1,40 @@
+```groovy
 pipeline {
     agent any
+
     environment {
         APP_DIR = '/var/www/demo-app'
     }
+
     stages {
+
         stage('Checkout') {
-            steps { checkout scm }
+            steps {
+                checkout scm
+            }
         }
-        stage('Backend: install & check') {
+
+        stage('Backend: install & test') {
             steps {
                 dir('sample-backend') {
                     sh '''
                         python3 -m venv venv
                         . venv/bin/activate
+
                         pip install -r requirements.txt
+
+                        echo "Running Django system check..."
                         python manage.py check
+
+                        echo "Running Django tests..."
+                        python manage.py test
+
+                        deactivate
                     '''
                 }
             }
         }
+
         stage('Frontend: install & build') {
             steps {
                 dir('sample-frontend') {
@@ -29,6 +45,7 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy') {
             steps {
                 sh '''
@@ -41,10 +58,14 @@ pipeline {
                         ./ ${APP_DIR}/
 
                     cd ${APP_DIR}/sample-backend
+
                     . venv/bin/activate
+
                     pip install -r requirements.txt
+
                     python manage.py migrate --noinput
                     python manage.py collectstatic --noinput
+
                     deactivate
 
                     sudo systemctl restart demo-app
@@ -53,8 +74,15 @@ pipeline {
             }
         }
     }
+
     post {
-        success { echo 'Deployed successfully.' }
-        failure { echo 'Build or deploy failed — check the stage logs above.' }
+        success {
+            echo 'Tests passed and application deployed successfully.'
+        }
+
+        failure {
+            echo 'Build, test, or deployment failed — check the stage logs above.'
+        }
     }
 }
+```
