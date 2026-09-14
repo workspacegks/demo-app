@@ -56,13 +56,13 @@ pipeline {
 
                     echo "Deploying application..."
 
-                    rsync -rlpD --delete \
-    			--exclude ".git" \
-    			--exclude "sample-backend/venv" \
-    			--exclude "sample-backend/.env" \
-    			--exclude "sample-frontend/.env" \
-    			--exclude "sample-frontend/node_modules" \
-    			./ ${APP_DIR}/
+                    rsync -rlptD --delete \
+                        --exclude ".git" \
+                        --exclude "sample-backend/venv" \
+                        --exclude "sample-backend/.env" \
+                        --exclude "sample-frontend/.env" \
+                        --exclude "sample-frontend/node_modules" \
+                        ./ ${APP_DIR}/
 
                     cd ${APP_DIR}/sample-backend
 
@@ -80,7 +80,7 @@ pipeline {
                     deactivate
 
                     echo "Restarting Gunicorn..."
-                    sudo systemctl restart demo-app
+                    sudo systemctl restart demo-app.service
 
                     echo "Reloading Nginx..."
                     sudo systemctl reload nginx
@@ -97,7 +97,7 @@ pipeline {
         }
 
         failure {
-            echo 'Pipeline failed. Check the stage logs above.'
+            echo 'Pipeline failed — check the stage logs above.'
         }
     }
 }
