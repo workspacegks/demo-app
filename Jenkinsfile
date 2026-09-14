@@ -56,13 +56,13 @@ pipeline {
 
                     echo "Deploying application..."
 
-                    rsync -rlptD --delete \
-                        --exclude ".git" \
-                        --exclude "sample-backend/venv" \
-                        --exclude "sample-backend/.env" \
-                        --exclude "sample-frontend/.env" \
-                        --exclude "sample-frontend/node_modules" \
-                        ./ ${APP_DIR}/
+                    rsync -rlpD --delete \
+    			--exclude ".git" \
+    			--exclude "sample-backend/venv" \
+    			--exclude "sample-backend/.env" \
+    			--exclude "sample-frontend/.env" \
+    			--exclude "sample-frontend/node_modules" \
+    			./ ${APP_DIR}/
 
                     cd ${APP_DIR}/sample-backend
 
