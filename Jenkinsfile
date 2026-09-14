@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
         APP_DIR = '/var/www/demo-app'
     }
@@ -19,9 +23,11 @@ pipeline {
                     sh '''
                         set -e
 
+                        echo "Creating Python virtual environment..."
                         python3 -m venv venv
                         . venv/bin/activate
 
+                        echo "Installing backend dependencies..."
                         pip install -r requirements.txt
 
                         echo "Running Django system check..."
@@ -42,7 +48,10 @@ pipeline {
                     sh '''
                         set -e
 
+                        echo "Installing frontend dependencies..."
                         npm ci
+
+                        echo "Building frontend..."
                         npm run build
                     '''
                 }
@@ -56,8 +65,11 @@ pipeline {
 
                     echo "Deploying application..."
 
-                    rsync -rlptD --delete \
+                    rsync -r --delete \
                         --exclude ".git" \
+                        --exclude "@tmp" \
+                        --exclude "sample-backend@tmp" \
+                        --exclude "sample-frontend@tmp" \
                         --exclude "sample-backend/venv" \
                         --exclude "sample-backend/.env" \
                         --exclude "sample-frontend/.env" \
@@ -66,6 +78,7 @@ pipeline {
 
                     cd ${APP_DIR}/sample-backend
 
+                    echo "Activating production virtual environment..."
                     . venv/bin/activate
 
                     echo "Installing backend dependencies..."
@@ -93,11 +106,11 @@ pipeline {
 
     post {
         success {
-            echo 'Build, tests, frontend build, migration, and deployment completed successfully.'
+            echo '✅ Tests, frontend build, deployment, migrations, Gunicorn restart, and Nginx reload completed successfully.'
         }
 
         failure {
-            echo 'Pipeline failed — check the stage logs above.'
+            echo '❌ Pipeline failed — check the stage logs above.'
         }
     }
 }
